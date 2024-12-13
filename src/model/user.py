@@ -35,5 +35,8 @@ def user_list() -> list[UserInfo]:
 def user_by_id(user_id: int) -> UserInfo:
     return user_info[user_id]
 
+def add_user(user: UserInfo) -> None:
+    user_info.append(user)
+
 if __name__ == "__main__":
     pass
