@@ -3,7 +3,7 @@ from typing import Any
 from flask import  json, jsonify, request, Blueprint, Response
 from flask_restful import Resource, Api
 
-from model.user import user_by_id, user_list, add_user, UserInfo
+from model.user import add_user, user_by_id, user_list, update_user, UserInfo
 
 
 app = Blueprint("user", __name__)
@@ -23,11 +23,12 @@ class UserResource(Resource):
         return {"message": "post user"}
     
     def _request_formatter(self, data: Any) -> UserInfo:
-        user = {}
         try:
-            user["name"] = data["name"]
-            user["chip"] = int(data["chip"])
-            user["role"] = data["role"] if data["role"] else None
+            user = {
+                "name": data["name"],
+                "chip": int(data["chip"]),
+                "role": data["role"] if data["role"] else None
+            }
             if data["isPlaying"] == "true"\
                 or data["isPlaying"] == "True":
                 user["isPlaying"] = True
@@ -35,7 +36,23 @@ class UserResource(Resource):
                 user["isPlaying"] = False
         except (KeyError, ValueError) as e:
             raise ValueError(f"Invalid request: {e}")
-        return user
+        else:
+            return user
+    
+    def put(self, user_id: str) -> None:
+        data = request.data.decode("utf-8")
+        data = json.loads(data)
+
+        update_user(
+            user_id=int(user_id),
+            name = str(data["name"]) if data in "name" else None,
+            chip = int(data["chip"]) if data in "chip" else None,
+            role = data["role"] if data in "role" else None,
+            isPlaying = data["isPlaying"] if data in "isPlaying" else None
+        )
+
+    def delete(self):
+        pass
 
     
 api.add_resource(

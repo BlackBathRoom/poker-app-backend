@@ -1,10 +1,12 @@
-from typing import Literal,TypedDict
+from typing import Any, Literal, TypedDict
 
+
+Role = Literal["DB", "SB", "BB"] 
 
 class UserInfo(TypedDict):
     name: str
     chip: int
-    role: Literal["DB", "SB", "BB"] | None
+    role: Role | None
     isPlaying: bool
 
 # dammy data
@@ -38,5 +40,12 @@ def user_by_id(user_id: int) -> UserInfo:
 def add_user(user: UserInfo) -> None:
     user_info.append(user)
 
+def update_user(user_id: int, **kwargs: Any) -> None:
+    for key, val in kwargs.items():
+        if val == None:
+            continue
+        user_info[user_id][key] = val
+
 if __name__ == "__main__":
-    pass
+    update_user(1, name="gorira")
+    print(user_info)
