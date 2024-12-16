@@ -31,21 +31,31 @@ user_info: list[UserInfo] = [
     },
 ]
 
-def user_list() -> list[UserInfo]:
-    return user_info
+class UserDBManager:
+    def __init__(self) -> None:
+        self.user_info = user_info
 
-def user_by_id(user_id: int) -> UserInfo:
-    return user_info[user_id]
+    def user_list(self) -> list[UserInfo]:
+        return self.user_info
+    
+    def user_by_id(self, user_id: int) -> UserInfo:
+        return self.user_info[user_id]
+    
+    def add_user(self, user: UserInfo) -> None:
+        self.user_info.append(user)
+    
+    def update_name(self, user_id: int, name: str) -> None:
+        self.user_info[user_id]["name"] = name
 
-def add_user(user: UserInfo) -> None:
-    user_info.append(user)
+    def update_chip(self, user_id: int, chip: int) -> None:
+        self.user_info[user_id]["chip"] = chip
 
-def update_user(user_id: int, **kwargs: Any) -> None:
-    for key, val in kwargs.items():
-        if val == None:
-            continue
-        user_info[user_id][key] = val
+    def update_role(self, user_id: int, role: Role) -> None:
+        self.user_info[user_id]["role"] = role
+
+    def update_isPlaying(self, user_id: int, isPlaying: bool) -> None:
+        self.user_info[user_id]["isPlaying"] = isPlaying
+
 
 if __name__ == "__main__":
-    update_user(1, name="gorira")
     print(user_info)
