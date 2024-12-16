@@ -56,6 +56,9 @@ class UserDBManager:
     def update_isPlaying(self, user_id: int, isPlaying: bool) -> None:
         self.user_info[user_id]["isPlaying"] = isPlaying
 
+    def delete_user(self, user_id: int) -> None:
+        self.user_info.pop(user_id)
+
 
 if __name__ == "__main__":
     print(user_info)

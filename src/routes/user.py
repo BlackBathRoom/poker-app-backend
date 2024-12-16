@@ -58,8 +58,9 @@ class UserResource(Resource):
 
         return {"message": data}
 
-    def delete(self, user_id: str | None = None) -> Response:
-        pass
+    def delete(self, user_id: str) -> Response:
+        self.db.delete_user(int(user_id))
+        return {"message": "delete user"}
 
     
 api.add_resource(
