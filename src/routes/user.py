@@ -31,7 +31,7 @@ class UserResource(Resource):
             user = {
                 "name": data["name"],
                 "chip": int(data["chip"]),
-                "role": data["role"] if data["role"] else None
+                "role": data["role"] if data["role"] else None,
             }
             if data["isPlaying"] == "true"\
                 or data["isPlaying"] == "True":
@@ -68,7 +68,8 @@ class UserChipResource(Resource):
         self.db = UserDBManager()
     
     def get(self, user_id: str) -> Response:
-        return jsonify(self.db.user_chip(int(user_id)))
+        user = self.db.user_by_id(int(user_id))
+        return jsonify(user["chip"])
 
     def put(self, user_id: str) -> Response:
         data = request.data.decode("utf-8")
@@ -76,7 +77,22 @@ class UserChipResource(Resource):
 
         self.db.update_chip(int(user_id), data["chip"])
         return {"message": data}
+    
+class UserPlayingResource(Resource):
+    def __init__(self) -> None:
+        super().__init__()
+        self.db = UserDBManager()
+    
+    def get(self, user_id: str) -> Response:
+        user = self.db.user_by_id(int(user_id))
+        return jsonify(user["isPlaying"])
 
+    def put(self, user_id: str) -> Response:
+        data = request.data.decode("utf-8")
+        data = json.loads(data)
+
+        self.db.update_isPlaying(int(user_id), data["isPlaying"])
+        return {"message": data}
     
 api.add_resource(
     UserResource,
@@ -87,6 +103,11 @@ api.add_resource(
 api.add_resource(
     UserChipResource,
     "/<string:user_id>/chip",
+)
+
+api.add_resource(
+    UserPlayingResource,
+    "/<string:user_id>/isplaying",
 )
 
 if __name__ == "__main__":
