@@ -61,12 +61,32 @@ class UserResource(Resource):
     def delete(self, user_id: str) -> Response:
         self.db.delete_user(int(user_id))
         return {"message": "delete user"}
+    
+class UserChipResource(Resource):
+    def __init__(self) -> None:
+        super().__init__()
+        self.db = UserDBManager()
+    
+    def get(self, user_id: str) -> Response:
+        return jsonify(self.db.user_chip(int(user_id)))
+
+    def put(self, user_id: str) -> Response:
+        data = request.data.decode("utf-8")
+        data = json.loads(data)
+
+        self.db.update_chip(int(user_id), data["chip"])
+        return {"message": data}
 
     
 api.add_resource(
     UserResource,
     "/",
     "/<string:user_id>",
+)
+
+api.add_resource(
+    UserChipResource,
+    "/<string:user_id>/chip",
 )
 
 if __name__ == "__main__":
