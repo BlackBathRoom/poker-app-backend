@@ -1,10 +1,10 @@
-from json import JSONDecodeError
-from typing import Any
+from typing import Any, get_type_hints
 
 from flask import request, Blueprint, Response
-from flask.json import jsonify, loads
-from flask_restful import Resource, Api
+from flask.json import loads
+from flask_restful import abort, output_json, Api, Resource
 
+from exceptios import UserNotFoundError
 from model.user import UserDBManager, UserInfo
 
 
@@ -20,13 +20,29 @@ class UserResource(Resource):
 
     def get(self, user_id: str | None = None) -> Response:
         if user_id:
-            return jsonify(self.db.user_by_id(int(user_id)))
-        return jsonify(self.db.user_list())
+            try:
+                user = self.db.user_by_id(int(user_id))
+            except UserNotFoundError:
+                return abort(404, status=404, message="User not found")
+        else:
+            user = self.db.user_list()
+
+        return output_json(
+            data=user,
+            code=200
+        )
 
     def post(self) -> Response:
         data = loads(request.data.decode("utf-8"))
-        self.db.add_user(self._request_formatter(data))
-        return {"message": "post user"}
+        try:
+            self.db.add_user(self._request_formatter(data))
+        except ValueError as e:
+            return abort(400, status=400, message=f"Missing Keys: {e}")
+        
+        return output_json(
+            data={"user_id": "dummy_id"}, # ユーザーIDの返却
+            code=201
+        )
     
     def _request_formatter(self, data: Any) -> UserInfo:
         try:
@@ -36,29 +52,32 @@ class UserResource(Resource):
                 "role": data["role"] if data["role"] else None,
                 "isplaying": data["isplaying"],
             }
-        except (KeyError, ValueError) as e:
-            raise ValueError(f"Invalid request: {e}")
-        else:
-            return user
+        except KeyError:
+            keys = list(get_type_hints(UserInfo).keys())
+            raise ValueError(f"{set(keys) - set(data.keys())}")
+        return user
     
     def put(self, user_id: str) -> Response:
-        data = request.data.decode("utf-8")
-        data = loads(data)
-
-        self.db.update_user(int(user_id), **data)
-
-        return {"message": data}
+        data = loads(request.data.decode("utf-8"))
+        try:
+            self.db.update_user(int(user_id), **self._request_formatter(data))
+        except UserNotFoundError:
+            return abort(400, status=400, message="User not found")
+        return {"status": 204}
 
     def delete(self, user_id: str) -> Response:
-        self.db.delete_user(int(user_id))
-        return {"message": "delete user"}
+        try:
+            self.db.delete_user(int(user_id))
+        except UserNotFoundError:
+            return abort(400, status=400, message="User not found")
+        return {"status": 204}
 
 
 # サブリソース
 
 class UserSubResource(Resource):
 
-    sub_resource = ["name", "chip", "role", "isplaying"]
+    sub_resource = list(get_type_hints(UserInfo).keys())
 
     def __init__(self) -> None:
         super().__init__()
@@ -71,25 +90,36 @@ class UserSubResource(Resource):
     
     def get(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return {"message": "Invalid resource type"}
-        user = self.db.user_by_id(int(user_id))
-        return jsonify(user[resource_type])
+            return abort(404, status=404, message="Invalid resource type")
+        try:
+            user = self.db.user_by_id(int(user_id))
+        except UserNotFoundError:
+            return abort(404, status=404, message="User not found")
+
+        return output_json(
+            data={resource_type: user[resource_type]},
+            code=200
+        )
 
     def put(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return {"message": "Invalid resource type"}, 400
+            return abort(404, status=404, message="Invalid resource type")
+        data = loads(request.data.decode("utf-8"))
+
         try:
-            data = loads(request.data.decode("utf-8"))
             self.db.update_user(int(user_id), **{resource_type: data[resource_type]})
-        except JSONDecodeError:
-            return {"message": "Invalid JSON format"}, 400
         except KeyError:
-            return {"message": "Invalid resource type"}, 400
-        else:
-            return {"message": f"update user {resource_type}"}, 200
+            return abort(400, status=400, message="Missing Keys")
+        return {"status": 204}
+    
+    def post(self, user_id: str, resource_type: str) -> Response:
+        return abort(405, status=405, message="Method Not Allowed")
+        
+    def delete(self, user_id: str, resource_type: str) -> Response:
+        return abort(405, status=405, message="Method Not Allowed")
 
 
-# ルーティングの設定
+# エンドポイントの設定
 api.add_resource(
     UserResource,
     "/",
