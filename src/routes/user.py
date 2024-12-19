@@ -78,7 +78,7 @@ class UserResource(Resource):
 
 class UserSubResource(Resource):
 
-    sub_resource = ["name", "chip", "role", "isplaying"]
+    sub_resource = list(get_type_hints(UserInfo).keys())
 
     def __init__(self) -> None:
         super().__init__()
@@ -91,22 +91,33 @@ class UserSubResource(Resource):
     
     def get(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return {"message": "Invalid resource type"}
-        user = self.db.user_by_id(int(user_id))
-        return jsonify(user[resource_type])
+            return abort(404, status=404, message="Invalid resource type")
+        try:
+            user = self.db.user_by_id(int(user_id))
+        except UserNotFoundError:
+            return abort(404, status=404, message="User not found")
+
+        return output_json(
+            data={resource_type: user[resource_type]},
+            status=200
+        )
 
     def put(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return {"message": "Invalid resource type"}, 400
+            return abort(404, status=404, message="Invalid resource type")
+        data = loads(request.data.decode("utf-8"))
+
         try:
-            data = loads(request.data.decode("utf-8"))
             self.db.update_user(int(user_id), **{resource_type: data[resource_type]})
-        except JSONDecodeError:
-            return {"message": "Invalid JSON format"}, 400
         except KeyError:
-            return {"message": "Invalid resource type"}, 400
-        else:
-            return {"message": f"update user {resource_type}"}, 200
+            return abort(400, status=400, message="Missing Keys")
+        return {"status": 204}
+    
+    def post(self, user_id: str, resource_type: str) -> Response:
+        return abort(405, status=405, message="Method Not Allowed")
+        
+    def delete(self, user_id: str, resource_type: str) -> Response:
+        return abort(405, status=405, message="Method Not Allowed")
 
 
 # エンドポイントの設定
