@@ -1,8 +1,7 @@
-from json import JSONDecodeError
 from typing import Any, get_type_hints
 
 from flask import request, Blueprint, Response
-from flask.json import jsonify, loads
+from flask.json import loads
 from flask_restful import abort, output_json, Api, Resource
 
 from exceptios import UserNotFoundError
