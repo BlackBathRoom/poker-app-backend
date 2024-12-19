@@ -29,7 +29,7 @@ class UserResource(Resource):
 
         return output_json(
             data=user,
-            status=200
+            code=200
         )
 
     def post(self) -> Response:
@@ -41,7 +41,7 @@ class UserResource(Resource):
         
         return output_json(
             data={"user_id", "dummy_id"}, # ユーザーIDの返却
-            status=201
+            code=201
         )
     
     def _request_formatter(self, data: Any) -> UserInfo:
@@ -98,7 +98,7 @@ class UserSubResource(Resource):
 
         return output_json(
             data={resource_type: user[resource_type]},
-            status=200
+            code=200
         )
 
     def put(self, user_id: str, resource_type: str) -> Response:
