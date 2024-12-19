@@ -37,10 +37,10 @@ class UserResource(Resource):
         try:
             self.db.add_user(self._request_formatter(data))
         except ValueError as e:
-            return abort(400, status=400, message=f"Missing Keys: {e.args}")
+            return abort(400, status=400, message=f"Missing Keys: {e}")
         
         return output_json(
-            data={"user_id", "dummy_id"}, # ユーザーIDの返却
+            data={"user_id": "dummy_id"}, # ユーザーIDの返却
             code=201
         )
     
@@ -54,7 +54,7 @@ class UserResource(Resource):
             }
         except KeyError:
             keys = list(get_type_hints(UserInfo).keys())
-            raise ValueError({set(keys) - set(data.keys())})
+            raise ValueError(f"{set(keys) - set(data.keys())}")
         return user
     
     def put(self, user_id: str) -> Response:
