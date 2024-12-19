@@ -1,10 +1,11 @@
 from json import JSONDecodeError
-from typing import Any
+from typing import Any, get_type_hints
 
 from flask import request, Blueprint, Response
 from flask.json import jsonify, loads
-from flask_restful import Resource, Api
+from flask_restful import abort, output_json, Api, Resource
 
+from exceptios import UserNotFoundError
 from model.user import UserDBManager, UserInfo
 
 
@@ -20,13 +21,29 @@ class UserResource(Resource):
 
     def get(self, user_id: str | None = None) -> Response:
         if user_id:
-            return jsonify(self.db.user_by_id(int(user_id)))
-        return jsonify(self.db.user_list())
+            try:
+                user = self.db.user_by_id(int(user_id))
+            except UserNotFoundError:
+                return abort(404, status=404, message="User not found")
+        else:
+            user = self.db.user_list()
+
+        return output_json(
+            data=user,
+            status=200
+        )
 
     def post(self) -> Response:
         data = loads(request.data.decode("utf-8"))
-        self.db.add_user(self._request_formatter(data))
-        return {"message": "post user"}
+        try:
+            self.db.add_user(self._request_formatter(data))
+        except ValueError as e:
+            return abort(400, status=400, message=f"Missing Keys: {e.args}")
+        
+        return output_json(
+            data={"user_id", "dummy_id"}, # ユーザーIDの返却
+            status=201
+        )
     
     def _request_formatter(self, data: Any) -> UserInfo:
         try:
@@ -36,22 +53,25 @@ class UserResource(Resource):
                 "role": data["role"] if data["role"] else None,
                 "isplaying": data["isplaying"],
             }
-        except (KeyError, ValueError) as e:
-            raise ValueError(f"Invalid request: {e}")
-        else:
-            return user
+        except KeyError:
+            keys = list(get_type_hints(UserInfo).keys())
+            raise ValueError({set(keys) - set(data.keys())})
+        return user
     
     def put(self, user_id: str) -> Response:
-        data = request.data.decode("utf-8")
-        data = loads(data)
-
-        self.db.update_user(int(user_id), **data)
-
-        return {"message": data}
+        data = loads(request.data.decode("utf-8"))
+        try:
+            self.db.update_user(int(user_id), **self._request_formatter(data))
+        except UserNotFoundError:
+            return abort(400, status=400, message="User not found")
+        return {"status": 204}
 
     def delete(self, user_id: str) -> Response:
-        self.db.delete_user(int(user_id))
-        return {"message": "delete user"}
+        try:
+            self.db.delete_user(int(user_id))
+        except UserNotFoundError:
+            return abort(400, status=400, message="User not found")
+        return {"status": 204}
 
 
 # サブリソース
@@ -89,7 +109,7 @@ class UserSubResource(Resource):
             return {"message": f"update user {resource_type}"}, 200
 
 
-# ルーティングの設定
+# エンドポイントの設定
 api.add_resource(
     UserResource,
     "/",
