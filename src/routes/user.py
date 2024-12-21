@@ -5,6 +5,7 @@ from flask.json import loads
 from flask_restful import abort, output_json, Api, Resource
 
 from exceptios import UserNotFoundError
+from response_header import response_header
 from model.user import UserDBManager, UserInfo
 
 
@@ -29,7 +30,8 @@ class UserResource(Resource):
 
         return output_json(
             data=user,
-            code=200
+            code=200,
+            headers=response_header
         )
 
     def post(self) -> Response:
@@ -41,7 +43,8 @@ class UserResource(Resource):
         
         return output_json(
             data={"user_id": "dummy_id"}, # ユーザーIDの返却
-            code=201
+            code=201,
+            headers=response_header
         )
     
     def _request_formatter(self, data: Any) -> UserInfo:
@@ -62,15 +65,15 @@ class UserResource(Resource):
         try:
             self.db.update_user(int(user_id), **self._request_formatter(data))
         except UserNotFoundError:
-            return abort(400, status=400, message="User not found")
+            return abort(400, status=400, message="User not found", headers=response_header)
         return {"status": 204}
 
     def delete(self, user_id: str) -> Response:
         try:
             self.db.delete_user(int(user_id))
         except UserNotFoundError:
-            return abort(400, status=400, message="User not found")
-        return {"status": 204}
+            return abort(400, status=400, message="User not found", headers=response_header)
+        return {"status": 204, "headers": response_header}
 
 
 # サブリソース
@@ -90,7 +93,7 @@ class UserSubResource(Resource):
     
     def get(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return abort(404, status=404, message="Invalid resource type")
+            return abort(404, status=404, message="Invalid resource type", headers=response_header)
         try:
             user = self.db.user_by_id(int(user_id))
         except UserNotFoundError:
@@ -98,7 +101,8 @@ class UserSubResource(Resource):
 
         return output_json(
             data={resource_type: user[resource_type]},
-            code=200
+            code=200,
+            headers=response_header
         )
 
     def put(self, user_id: str, resource_type: str) -> Response:
@@ -110,13 +114,13 @@ class UserSubResource(Resource):
             self.db.update_user(int(user_id), **{resource_type: data[resource_type]})
         except KeyError:
             return abort(400, status=400, message="Missing Keys")
-        return {"status": 204}
+        return {"status": 204, "headers": response_header}
     
     def post(self, user_id: str, resource_type: str) -> Response:
-        return abort(405, status=405, message="Method Not Allowed")
+        return abort(405, status=405, message="Method Not Allowed", headers=response_header)
         
     def delete(self, user_id: str, resource_type: str) -> Response:
-        return abort(405, status=405, message="Method Not Allowed")
+        return abort(405, status=405, message="Method Not Allowed", headers=response_header)
 
 
 # エンドポイントの設定
