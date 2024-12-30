@@ -52,11 +52,16 @@ class DbManager(Connection):
         )
         self.commit()
 
-    def select(self, table_name: str, columns: list[str], condition: str) -> list[dict[str, Any]]:
-        query = f"SELECT {', '.join(columns)} FROM {table_name} WHERE {condition}"
-        cur = self.execute(
-            query,
-        )
+    def select(
+        self,
+        table_name: str,
+        columns: list[str],
+        condition: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = f"SELECT {', '.join(columns)} FROM {table_name}"
+        if condition is not None:
+            query += f" WHERE {condition}"
+        cur = self.execute(query)
         result = cur.fetchall()
         
         res = []
@@ -84,4 +89,4 @@ class DbManager(Connection):
 
 if __name__ == "__main__":
     db = DbManager("example.db")
-    db.drop_table("users")
+    print(db.select("users", ["name", "chip"]))
