@@ -1,59 +1,68 @@
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal
+from uuid import uuid4
+
+from model.base_db import DbManager
+from schema import UserInfo
 
 
-Role = Literal["DB", "SB", "BB"] 
-
-class UserInfo(TypedDict):
-    name: str
-    chip: int
-    role: Role | None
-    isplaying: bool
-
-# dammy data
-user_info: list[UserInfo] = [
-    {
-        "name": "hogehoge",
-        "chip": 200,
-        "role": None,
-        "isplaying": True,
-    },
-    {
-        "name": "fugafuga",
-        "chip": 100,
-        "role": "DB",
-        "isplaying": False,
-    },
-    {
-        "name": "piyopiyo",
-        "chip": 200,
-        "role": None,
-        "isplaying": False,
-    },
-]
-
-class UserDBManager:
+class UserDBManager(DbManager):
     def __init__(self) -> None:
-        self.user_info = user_info
+        super().__init__("demo.db")
+        self.create_table(
+            "users",
+            "id",
+            not_null=["name", "chip", "isplaying"],
+            id="TEXT",
+            name="TEXT",
+            chip="INTEGER",
+            role="TEXT",
+            isplaying="INTEGER",
+        )
+
+    def _data_formatter(
+        self,
+        mode: Literal["encode", "decode"],
+        **kwargs: Any
+    ) -> dict[str, Any]:
+        is_encode = True if mode == "encode" else False
+        data = {}
+        for key, val in kwargs.items():
+            if key == "isplaying":
+                val = int(val) if is_encode else bool(val)
+            data.setdefault(key, val)
+        return data
 
     def user_list(self) -> list[UserInfo]:
-        return self.user_info
+        data = self.select("users", ["name", "chip", "role", "isplaying"])
+        users = [
+            self._data_formatter(mode="decode", **row)
+            for row in data
+        ]
+        return users
     
-    def user_by_id(self, user_id: int) -> UserInfo:
-        return self.user_info[user_id]
-    
-    def add_user(self, user: UserInfo) -> None:
-        self.user_info.append(user)
+    def user_by_id(self, user_id: str) -> UserInfo:
+        data = self.select("users", ["name", "chip", "role", "isplaying"], f"id = '{user_id}'")
+        user = self._data_formatter(mode="decode", **data[0])
+        return user
 
-    def update_user(self, user_id: int, **kwargs: Any) -> None:
-        for key, value in kwargs.items():
-            if key in self.user_info[user_id]:
-                self.user_info[user_id][key] = value
-            else:
-                raise KeyError(f"Invalid key: {key}")
+    def add_user(self, user: UserInfo) -> str:
+        _id = str(uuid4())
+        data = self._data_formatter(mode="encode", **user)
+        self.insert(
+            "users",
+            id=_id,
+            **data
+        )
+        return _id
 
-    def delete_user(self, user_id: int) -> None:
-        self.user_info.pop(user_id)
+    def update_user(self, user_id: str, **kwargs: Any) -> None:
+        data = self._data_formatter(mode="encode", **kwargs)
+        self.update("users", f"id = '{user_id}'", **data)
+
+    def delete_user(self, user_id: str) -> None:
+        self.delete("users", f"id = '{user_id}'")
 
 
 if __name__ == "__main__":
-    print(user_info)
+    user_db = UserDBManager()
+    print(user_db.user_list())
