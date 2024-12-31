@@ -7,7 +7,7 @@ DATA_TYPE = Literal["TEXT", "INTEGER", "REAL", "BLOB", "NULL"]
 class DbManager(Connection):
     def __init__(self, db_name: str) -> None:
         self.db_name = db_name
-        super().__init__(f"database/{self.db_name}")
+        super().__init__(f".database/{self.db_name}")
         self._cursor = super().cursor()
 
     def _create_placeholder(self, n: int) -> str:
@@ -73,11 +73,7 @@ class DbManager(Connection):
     def update(self, table_name: str, condition: str, **kwargs: Any) -> None:
         set_values = ", ".join([f"{key} = ?" for key in kwargs.keys()])
         query = f"UPDATE {table_name} SET {set_values} WHERE {condition}"
-        vals = [
-            str(val)
-            if type(val) is int else f"'{val}'"
-            for val in kwargs.values()
-        ]
+        vals = [str(val) for val in kwargs.values()]
         self.execute(query, vals)
         self.commit()
 
