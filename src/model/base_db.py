@@ -33,9 +33,7 @@ class DbManager(Connection):
             columns += ", "
 
         query = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns[:-2]})"
-        self._cursor.execute(
-            query,
-        )
+        self._cursor.execute(query)
         self.commit()
 
     def drop_table(self, table_name: str) -> None:
@@ -46,7 +44,7 @@ class DbManager(Connection):
     def insert(self, table_name: str, **kwargs: Any) -> None:
         columns = ", ".join(kwargs.keys())
         query = f"INSERT INTO {table_name} ({columns}) VALUES ({self._create_placeholder(len(kwargs))})"
-        self.execute(
+        self._cursor.execute(
             query,
             tuple(kwargs.values()),
         )
@@ -61,7 +59,7 @@ class DbManager(Connection):
         query = f"SELECT {', '.join(columns)} FROM {table_name}"
         if condition is not None:
             query += f" WHERE {condition}"
-        cur = self.execute(query)
+        cur = self._cursor.execute(query)
         result = cur.fetchall()
         
         res = []
@@ -74,12 +72,12 @@ class DbManager(Connection):
         set_values = ", ".join([f"{key} = ?" for key in kwargs.keys()])
         query = f"UPDATE {table_name} SET {set_values} WHERE {condition}"
         vals = [str(val) for val in kwargs.values()]
-        self.execute(query, vals)
+        self._cursor.execute(query, vals)
         self.commit()
 
     def delete(self, table_name: str, condition: str) -> None:
         query = f"DELETE FROM {table_name} WHERE {condition}"
-        self.execute(query)
+        self._cursor.execute(query)
         self.commit()
 
 
