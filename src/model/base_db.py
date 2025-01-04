@@ -2,7 +2,7 @@ from sqlite3 import Connection
 from typing import Any, Literal
 
 
-DATA_TYPE = Literal["TEXT", "INTEGER", "REAL", "BLOB", "NULL"]
+DataType = Literal["TEXT", "INTEGER", "REAL", "BLOB", "NULL"]
 
 class DbManager(Connection):
     def __init__(self, db_name: str) -> None:
@@ -12,13 +12,19 @@ class DbManager(Connection):
 
     def _create_placeholder(self, n: int) -> str:
         return ", ".join(["?" for _ in range(n)])
+    
+    def data_checker(self, table_name: str, condition: str) -> bool:
+        result = self.select(table_name, ["*"], condition)
+        if not result:
+            return False
+        return True
 
     def create_table(
         self,
         table_name: str,
         primary: str,
         not_null: list[str] = [],
-        **kwargs: DATA_TYPE
+        **kwargs: DataType
     ) -> None:
         if primary not in kwargs:
             raise ValueError(f"Primary key {primary} is not in columns")

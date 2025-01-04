@@ -40,6 +40,8 @@ class UserResource(Resource):
             _id = self.db.add_user(self._request_formatter(data))
         except ValueError as e:
             return abort(400, status=400, message=f"Missing Keys: {e}")
+        except UserNotFoundError:
+            return abort(400, status=400, message="User not found")
         
         return output_json(
             data={"user_id": _id}, # ユーザーIDの返却

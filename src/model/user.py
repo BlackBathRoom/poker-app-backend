@@ -1,6 +1,7 @@
 from typing import Any, Literal
 from uuid import uuid4
 
+from exceptios import UserNotFoundError
 from model.base_db import DbManager
 from schema import UserInfo
 
@@ -31,6 +32,10 @@ class UserDBManager(DbManager):
                 val = int(val) if is_encode else bool(val)
             data.setdefault(key, val)
         return data
+    
+    def data_checker(self, user_id: str) -> None:
+        if not super().data_checker("users", f"id = '{user_id}'"):
+            raise UserNotFoundError
 
     def user_list(self) -> list[UserInfo]:
         data = self.select("users", ["name", "chip", "role", "isplaying"])
@@ -42,6 +47,8 @@ class UserDBManager(DbManager):
     
     def user_by_id(self, user_id: str) -> UserInfo:
         data = self.select("users", ["name", "chip", "role", "isplaying"], f"id = '{user_id}'")
+        if not data:
+            raise UserNotFoundError
         user = self._data_formatter(mode="decode", **data[0])
         return user
 
@@ -56,10 +63,12 @@ class UserDBManager(DbManager):
         return _id
 
     def update_user(self, user_id: str, **kwargs: Any) -> None:
+        self.data_checker(user_id)
         data = self._data_formatter(mode="encode", **kwargs)
         self.update("users", f"id = '{user_id}'", **data)
 
     def delete_user(self, user_id: str) -> None:
+        self.data_checker(user_id)
         self.delete("users", f"id = '{user_id}'")
 
 
