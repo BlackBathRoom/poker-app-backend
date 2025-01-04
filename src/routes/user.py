@@ -22,7 +22,7 @@ class UserResource(Resource):
     def get(self, user_id: str | None = None) -> Response:
         if user_id:
             try:
-                user = self.db.user_by_id(int(user_id))
+                user = self.db.user_by_id(user_id)
             except UserNotFoundError:
                 return abort(404, status=404, message="User not found")
         else:
@@ -37,12 +37,14 @@ class UserResource(Resource):
     def post(self) -> Response:
         data = loads(request.data.decode("utf-8"))
         try:
-            self.db.add_user(self._request_formatter(data))
+            _id = self.db.add_user(self._request_formatter(data))
         except ValueError as e:
             return abort(400, status=400, message=f"Missing Keys: {e}")
+        except UserNotFoundError:
+            return abort(400, status=400, message="User not found")
         
         return output_json(
-            data={"user_id": "dummy_id"}, # ユーザーIDの返却
+            data={"user_id": _id}, # ユーザーIDの返却
             code=201,
             headers=response_header
         )
@@ -63,14 +65,14 @@ class UserResource(Resource):
     def put(self, user_id: str) -> Response:
         data = loads(request.data.decode("utf-8"))
         try:
-            self.db.update_user(int(user_id), **self._request_formatter(data))
+            self.db.update_user(user_id, **self._request_formatter(data))
         except UserNotFoundError:
             return abort(400, status=400, message="User not found", headers=response_header)
         return {"status": 204}
 
     def delete(self, user_id: str) -> Response:
         try:
-            self.db.delete_user(int(user_id))
+            self.db.delete_user(user_id)
         except UserNotFoundError:
             return abort(400, status=400, message="User not found", headers=response_header)
         return {"status": 204, "headers": response_header}
@@ -95,7 +97,7 @@ class UserSubResource(Resource):
         if not self._resource_type_checker(resource_type):
             return abort(404, status=404, message="Invalid resource type", headers=response_header)
         try:
-            user = self.db.user_by_id(int(user_id))
+            user = self.db.user_by_id(user_id)
         except UserNotFoundError:
             return abort(404, status=404, message="User not found")
 
@@ -111,7 +113,7 @@ class UserSubResource(Resource):
         data = loads(request.data.decode("utf-8"))
 
         try:
-            self.db.update_user(int(user_id), **{resource_type: data[resource_type]})
+            self.db.update_user(user_id, **{resource_type: data[resource_type]})
         except KeyError:
             return abort(400, status=400, message="Missing Keys")
         return {"status": 204, "headers": response_header}
