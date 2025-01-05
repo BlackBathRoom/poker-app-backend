@@ -2,10 +2,10 @@ from typing import Any, get_type_hints
 
 from flask import request, Blueprint, Response
 from flask.json import loads
-from flask_restful import abort, output_json, Api, Resource
+from flask_restful import Api
 
 from exceptios import UserNotFoundError
-from response_header import response_header
+from routes.base_resource import BaseResource
 from model.user import UserDBManager, UserInfo
 
 
@@ -14,7 +14,7 @@ api = Api(app)
 
 # Userリソース
 
-class UserResource(Resource):
+class UserResource(BaseResource):
     def __init__(self) -> None:
         super().__init__()
         self.db = UserDBManager()
@@ -24,37 +24,29 @@ class UserResource(Resource):
             try:
                 user = self.db.user_by_id(user_id)
             except UserNotFoundError:
-                return abort(404, status=404, message="User not found")
+                self.error_response(404, "User not found")
         else:
             user = self.db.user_list()
 
-        return output_json(
-            data=user,
-            code=200,
-            headers=response_header
-        )
+        return self.success_response(200, data=user)
 
     def post(self) -> Response:
         data = loads(request.data.decode("utf-8"))
         try:
             _id = self.db.add_user(self._request_formatter(data))
         except ValueError as e:
-            return abort(400, status=400, message=f"Missing Keys: {e}")
+            self.error_response(400, f"Missing Keys: {e}")
         except UserNotFoundError:
-            return abort(400, status=400, message="User not found")
+            self.error_response(400, "User not found")
         
-        return output_json(
-            data={"user_id": _id}, # ユーザーIDの返却
-            code=201,
-            headers=response_header
-        )
+        return self.success_response(201, data={"id": _id})
     
     def _request_formatter(self, data: Any) -> UserInfo:
         try:
             user = {
                 "name": data["name"],
-                "chip": int(data["chip"]),
-                "role": data["role"] if data["role"] else None,
+                "chip": data["chip"],
+                "role": data["role"],
                 "isplaying": data["isplaying"],
             }
         except KeyError:
@@ -67,20 +59,20 @@ class UserResource(Resource):
         try:
             self.db.update_user(user_id, **self._request_formatter(data))
         except UserNotFoundError:
-            return abort(400, status=400, message="User not found", headers=response_header)
-        return {"status": 204}
+            self.error_response(400, "User not found")
+        return self.success_response(204)
 
     def delete(self, user_id: str) -> Response:
         try:
             self.db.delete_user(user_id)
         except UserNotFoundError:
-            return abort(400, status=400, message="User not found", headers=response_header)
-        return {"status": 204, "headers": response_header}
+            self.error_response(404, "User not found")
+        return self.success_response(204)
 
 
 # サブリソース
 
-class UserSubResource(Resource):
+class UserSubResource(BaseResource):
 
     sub_resource = list(get_type_hints(UserInfo).keys())
 
@@ -95,34 +87,33 @@ class UserSubResource(Resource):
     
     def get(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return abort(404, status=404, message="Invalid resource type", headers=response_header)
+            self.error_response(404, "Invalid resource type")
         try:
             user = self.db.user_by_id(user_id)
         except UserNotFoundError:
-            return abort(404, status=404, message="User not found")
+            self.error_response(404, "User not found")
 
-        return output_json(
-            data={resource_type: user[resource_type]},
+        return self.success_response(
             code=200,
-            headers=response_header
+            data={resource_type: user[resource_type]},
         )
 
     def put(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_type_checker(resource_type):
-            return abort(404, status=404, message="Invalid resource type")
+            self.error_response(404, "Invalid resource type")
         data = loads(request.data.decode("utf-8"))
 
         try:
             self.db.update_user(user_id, **{resource_type: data[resource_type]})
         except KeyError:
-            return abort(400, status=400, message="Missing Keys")
-        return {"status": 204, "headers": response_header}
+            self.error_response(400, "Missing Keys")
+        return self.success_response(204)
     
     def post(self, user_id: str, resource_type: str) -> Response:
-        return abort(405, status=405, message="Method Not Allowed", headers=response_header)
+        self.error_response(405, "Method Not Allowed")
         
     def delete(self, user_id: str, resource_type: str) -> Response:
-        return abort(405, status=405, message="Method Not Allowed", headers=response_header)
+        self.error_response(405, "Method Not Allowed")
 
 
 # エンドポイントの設定
