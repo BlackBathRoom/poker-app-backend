@@ -77,7 +77,7 @@ class DbManager(Connection):
     def update(self, table_name: str, condition: str, **kwargs: Any) -> None:
         set_values = ", ".join([f"{key} = ?" for key in kwargs.keys()])
         query = f"UPDATE {table_name} SET {set_values} WHERE {condition}"
-        vals = [str(val) for val in kwargs.values()]
+        vals = [val for val in kwargs.values()]
         self._cursor.execute(query, vals)
         self.commit()
 
