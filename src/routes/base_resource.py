@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, NoReturn
+from json import JSONDecodeError
+from typing import Any, Mapping, NoReturn, Optional, Sequence, TypeGuard
 
-from flask import Response
+from flask import Response, request
+from flask.json import loads
 from flask_restful import abort, output_json, Resource
 
 from response_header import response_header
@@ -27,11 +29,29 @@ class BaseResource(Resource, ABC):
     def delete(self, *args, **kwargs) -> Response:
         pass
 
-    def error_response(self, code: int, message: str) -> NoReturn:
+    def error_response(self, code: int, message: str) -> NoReturn: # type: ignore
         abort(code, status=code, message=message, headers=response_header)
     
-    def success_response(self, code: int, data: Mapping[str, Any] | None = None) -> Response:
+    def success_response(
+        self,
+        code: int,
+        data: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any]]] = None
+    ) -> Response:
         if data is None:
             return Response(status=code, headers=response_header)
         return output_json(data=data, code=code, headers=response_header)
+    
+    def request_data_checker(self, data: Any) -> TypeGuard[Mapping[str, Any]]:
+        if isinstance(data, Mapping):
+            return True
+        return False
+    
+    def request_loader(self) -> Any:
+        try:
+            data = request.data.decode("utf-8")
+        except JSONDecodeError:
+            self.error_response(400, "Invalid request data")
+        return loads(data)
+
+
 
