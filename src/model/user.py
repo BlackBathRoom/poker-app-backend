@@ -51,6 +51,17 @@ class UserDBManager(DbManager):
             raise UserNotFoundError
         user = self._data_formatter(mode="decode", **data[0])
         return UserInfo(**user)
+    
+    def user_detail_by_id(self, user_id: str, columns: str | list[str]) -> OptionalUserInfo:
+        data = self.select(
+            "users",
+            columns if isinstance(columns, list) else [columns],
+            f"id = '{user_id}'"
+        )
+        if not data:
+            raise UserNotFoundError
+        user = self._data_formatter(mode="decode", **data[0])
+        return OptionalUserInfo(**user)
 
     def add_user(self, user: UserInfo) -> str:
         _id = str(uuid4())
