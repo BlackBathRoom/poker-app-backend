@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from exceptios import UserNotFoundError
 from model.base_db import DbManager
-from schema import UserInfo
+from schema import OptionalUserInfo, UserInfo
 
 
 class UserDBManager(DbManager):
@@ -33,7 +33,7 @@ class UserDBManager(DbManager):
             data.setdefault(key, val)
         return data
     
-    def data_checker(self, user_id: str) -> None:
+    def _user_exists(self, user_id: str) -> None:
         if not super().data_checker("users", f"id = '{user_id}'"):
             raise UserNotFoundError
 
@@ -43,32 +43,41 @@ class UserDBManager(DbManager):
             self._data_formatter(mode="decode", **row)
             for row in data
         ]
-        return users
+        return [UserInfo(**user) for user in users]
     
     def user_by_id(self, user_id: str) -> UserInfo:
         data = self.select("users", ["name", "chip", "role", "isplaying"], f"id = '{user_id}'")
         if not data:
             raise UserNotFoundError
         user = self._data_formatter(mode="decode", **data[0])
-        return user
+        return UserInfo(**user)
+    
+    def user_detail_by_id(self, user_id: str, columns: str | list[str]) -> OptionalUserInfo:
+        data = self.select(
+            "users",
+            columns if isinstance(columns, list) else [columns],
+            f"id = '{user_id}'"
+        )
+        if not data:
+            raise UserNotFoundError
+        user = self._data_formatter(mode="decode", **data[0])
+        return OptionalUserInfo(**user)
 
     def add_user(self, user: UserInfo) -> str:
         _id = str(uuid4())
-        data = self._data_formatter(mode="encode", **user)
-        self.insert(
-            "users",
-            id=_id,
-            **data
-        )
+        data = self._data_formatter(mode="encode", **user.model_dump())
+        self.insert("users", id=_id, **data)
         return _id
 
-    def update_user(self, user_id: str, **kwargs: Any) -> None:
-        self.data_checker(user_id)
-        data = self._data_formatter(mode="encode", **kwargs)
+    def update_user(self, user_id: str, user_info: OptionalUserInfo) -> None:
+        self._user_exists(user_id)
+        data = self._data_formatter(
+            mode="encode", **user_info.model_dump(exclude_unset=True)
+        )
         self.update("users", f"id = '{user_id}'", **data)
 
     def delete_user(self, user_id: str) -> None:
-        self.data_checker(user_id)
+        self._user_exists(user_id)
         self.delete("users", f"id = '{user_id}'")
 
 
