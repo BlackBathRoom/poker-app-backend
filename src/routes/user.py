@@ -1,4 +1,3 @@
-from math import e
 from typing import Any, TypeVar, Union, cast
 
 from flask import Blueprint, Response
