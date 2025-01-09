@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from json import JSONDecodeError
 from typing import Any, Mapping, NoReturn, Optional, Sequence, TypeGuard
 
@@ -9,25 +8,9 @@ from flask_restful import abort, output_json, Resource
 from response_header import response_header
 
 
-class BaseResource(Resource, ABC):
+class BaseResource(Resource):
     def __init__(self) -> None:
         super().__init__()
-
-    @abstractmethod
-    def get(self, *args, **kwargs) -> Response:
-        pass
-
-    @abstractmethod
-    def post(self, *args, **kwargs) -> Response:
-        pass
-
-    @abstractmethod
-    def put(self, *args, **kwargs) -> Response:
-        pass
-
-    @abstractmethod
-    def delete(self, *args, **kwargs) -> Response:
-        pass
 
     def error_response(self, code: int, message: str) -> NoReturn: # type: ignore
         abort(code, status=code, message=message, headers=response_header)
@@ -52,6 +35,4 @@ class BaseResource(Resource, ABC):
         except JSONDecodeError:
             self.error_response(400, "Invalid request data")
         return loads(data)
-
-
 
