@@ -128,12 +128,6 @@ class UserSubResource(BaseResource):
         except KeyError:
             self.error_response(400, "Missing Keys")
         return self.success_response(204)
-    
-    def post(self, user_id: str, resource_type: str) -> Response:
-        self.error_response(405, "Method Not Allowed")
-        
-    def delete(self, user_id: str, resource_type: str) -> Response:
-        self.error_response(405, "Method Not Allowed")
 
 
 # エンドポイントの設定
