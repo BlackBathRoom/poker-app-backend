@@ -16,3 +16,10 @@ class OptionalUserInfo(BaseModel):
     role: Role | None = Field(default=None)
     isplaying: bool | None = Field(default=None)
 
+class GameInfo(BaseModel):
+    rate: int = Field(ge=0)
+    pot: int = Field(ge=0)
+
+class OptionalGameInfo(BaseModel):
+    rate: int | None = Field(default=None, ge=0)
+    pot: int | None = Field(default=None, ge=0)
