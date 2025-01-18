@@ -11,13 +11,11 @@ class UserDBManager(DbManager):
         super().__init__("demo.db")
         self.create_table(
             "users",
-            "id",
-            not_null=["name", "chip", "isplaying"],
-            id="TEXT",
-            name="TEXT",
-            chip="INTEGER",
-            role="TEXT",
-            isplaying="INTEGER",
+            id="TEXT PRIMARY KEY",
+            name="TEXT NOT NULL",
+            chip="INTEGER NOT NULL",
+            role="TEXT DEFAULT NULL",
+            isplaying="INTEGER NOT NULL",
         )
 
     def _data_formatter(
