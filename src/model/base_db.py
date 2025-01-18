@@ -22,21 +22,16 @@ class DbManager(Connection):
     def create_table(
         self,
         table_name: str,
-        primary: str,
-        not_null: list[str] = [],
-        **kwargs: DataType
+        **kwargs: str
     ) -> None:
-        if primary not in kwargs:
-            raise ValueError(f"Primary key {primary} is not in columns")
-
+        in_primary = False
         columns = ""
         for key, value in kwargs.items():
-            columns += f"{key} {value}"
-            if key == primary:
-                columns += " PRIMARY KEY"
-            if key in not_null:
-                columns += " NOT NULL"
-            columns += ", "
+            if "PRIMARY" in value:
+                in_primary = True
+            columns += f"{key} {value}, "
+        if not in_primary:
+            raise ValueError(f"Missing primary key")
 
         query = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns[:-2]})"
         self._cursor.execute(query)
