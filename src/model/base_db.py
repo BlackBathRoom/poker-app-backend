@@ -24,14 +24,26 @@ class DbManager(Connection):
     def create_table(
         self,
         table_name: str,
+        foreign_key: dict[str, str] | None = None,
         **kwargs: str
     ) -> None:
+        """テーブル作成関数
+
+        Args:
+            table_name (str): テーブル名
+            foreign_key (dict[str, str] | None, optional): 外部キー. {"カラム名", "参照キー名"}.
+            **kwargs (str): カラム名とデータ型、制約を指定.
+        """
         in_primary = False
         columns = ""
         for key, value in kwargs.items():
             if "PRIMARY" in value:
                 in_primary = True
             columns += f"{key} {value}, "
+
+        if foreign_key is not None:
+            for key, value in foreign_key.items():
+                columns += f"FOREIGN KEY ({key}) REFERENCES {value}, "
         if not in_primary:
             raise ValueError(f"Missing primary key")
 
@@ -83,7 +95,3 @@ class DbManager(Connection):
         self._cursor.execute(query)
         self.commit()
 
-
-if __name__ == "__main__":
-    db = DbManager("example.db")
-    print(db.select("users", ["name", "chip"]))
