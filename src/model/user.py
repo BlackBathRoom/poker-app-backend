@@ -72,7 +72,7 @@ class UserDBManager(DbManager):
     def add_user(self, user: UserInfo) -> str:
         _id = str(uuid4())
         data = self._data_formatter(mode="encode", **user.model_dump())
-        self.insert("users", id=_id, gaem_id=self._game_id, **data)
+        self.insert("users", id=_id, game_id=self._game_id, **data)
         return _id
 
     def update_user(self, user_id: str, user_info: OptionalUserInfo) -> None:
