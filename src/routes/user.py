@@ -7,7 +7,7 @@ from pydantic_core import ValidationError
 from exceptios import UserNotFoundError
 from routes.base_resource import BaseResource
 from model.user import UserDBManager, UserInfo
-from schema import OptionalUserInfo
+from model.schema import OptionalUserInfo
 
 
 app = Blueprint("users", __name__)

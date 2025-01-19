@@ -2,8 +2,13 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from exceptios import UserNotFoundError
-from model.base_db import DbManager
-from schema import OptionalUserInfo, UserInfo
+
+try:
+    from base_db import DbManager
+    from schema import OptionalUserInfo, UserInfo
+except ModuleNotFoundError:
+    from model.base_db import DbManager
+    from model.schema import OptionalUserInfo, UserInfo
 
 
 class UserDBManager(DbManager):
@@ -11,14 +16,15 @@ class UserDBManager(DbManager):
         super().__init__("demo.db")
         self.create_table(
             "users",
-            "id",
-            not_null=["name", "chip", "isplaying"],
-            id="TEXT",
-            name="TEXT",
-            chip="INTEGER",
-            role="TEXT",
-            isplaying="INTEGER",
+            foreign_key={"game_id": "gameInfo(id)"},
+            id="TEXT PRIMARY KEY",
+            game_id="TEXT NOT NULL",
+            name="TEXT NOT NULL",
+            chip="INTEGER NOT NULL",
+            role="TEXT DEFAULT NULL",
+            isplaying="INTEGER NOT NULL",
         )
+        self._game_id = "857c9314-f870-4ee5-8306-abac6a322356" # ゲームidによるログイン実装までの仮置き
 
     def _data_formatter(
         self,
@@ -66,7 +72,7 @@ class UserDBManager(DbManager):
     def add_user(self, user: UserInfo) -> str:
         _id = str(uuid4())
         data = self._data_formatter(mode="encode", **user.model_dump())
-        self.insert("users", id=_id, **data)
+        self.insert("users", id=_id, game_id=self._game_id, **data)
         return _id
 
     def update_user(self, user_id: str, user_info: OptionalUserInfo) -> None:
@@ -83,4 +89,4 @@ class UserDBManager(DbManager):
 
 if __name__ == "__main__":
     user_db = UserDBManager()
-    print(user_db.user_list())
+    
