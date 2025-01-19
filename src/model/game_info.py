@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+from exceptios import GameNotFoundError
+
 try:
     from base_db import DbManager
     from schema import OptionalGameInfo, GameInfo
@@ -18,6 +20,10 @@ class GameDBManager(DbManager):
             pot="INTEGER NOT NULL DEFAULT 0",
         )
 
+    def _game_exists(self, game_id: str) -> None:
+        if not self.data_checker("gameInfo", f"id = '{game_id}'"):
+            raise GameNotFoundError
+
     def insert_game_info(self, game_info: GameInfo) -> str:
         _id = str(uuid4())
         self.insert(
@@ -33,6 +39,7 @@ class GameDBManager(DbManager):
         self.update("gameInfo", f"id = '{game_id}'", **data)
 
     def get_game_info(self, game_id: str) -> GameInfo:
+        self._game_exists(game_id)
         data = self.select("gameInfo", ["rate", "pot"], f"id = '{game_id}'")
         return GameInfo(**data[0])
     
