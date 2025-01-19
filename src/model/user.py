@@ -2,8 +2,13 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from exceptios import UserNotFoundError
-from model.base_db import DbManager
-from schema import OptionalUserInfo, UserInfo
+
+try:
+    from base_db import DbManager
+    from schema import OptionalUserInfo, UserInfo
+except ModuleNotFoundError:
+    from model.base_db import DbManager
+    from model.schema import OptionalUserInfo, UserInfo
 
 
 class UserDBManager(DbManager):
