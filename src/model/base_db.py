@@ -1,3 +1,4 @@
+import os
 from sqlite3 import Connection
 from typing import Any, Literal
 
@@ -7,7 +8,8 @@ DataType = Literal["TEXT", "INTEGER", "REAL", "BLOB", "NULL"]
 class DbManager(Connection):
     def __init__(self, db_name: str) -> None:
         self.db_name = db_name
-        super().__init__(f".database/{self.db_name}")
+        path = os.path.dirname(__file__)
+        super().__init__(f"{path}/../../.database/{self.db_name}")
         self._cursor = super().cursor()
 
     def _create_placeholder(self, n: int) -> str:
