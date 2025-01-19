@@ -10,7 +10,7 @@ from model.game_info import GameDBManager
 from model.schema import GameInfo, OptionalGameInfo
 
 
-app = Blueprint("game_info", __name__)
+app = Blueprint("gameinfo", __name__)
 api = Api(app)
 
 # GameInfoリソース
@@ -49,10 +49,31 @@ class GameInfoResource(BaseResource):
         return self.success_response(204)
 
 
+# サブリソース
+class GameInfoSubResource(BaseResource):
+    def __init__(self) -> None:
+        super().__init__()
+        self.db = GameDBManager()
+    
+    def get(self, game_id: str, resource_type: str) -> Response:
+        game = self.db.get_game_info(game_id)
+        try:
+            resp = {resource_type: game.model_dump()[resource_type]}
+        except KeyError:
+            self.error_response(404, "Resource not found")
+        return self.success_response(
+            200,
+            data=resp
+        )
 
 
 api.add_resource(
     GameInfoResource,
-    "/game_info",
-    "/game_info/<string:game_id>"
+    "/",
+    "/<string:game_id>"
+)
+
+api.add_resource(
+    GameInfoSubResource,
+    "/<string:game_id>/<string:resource_type>"
 )
