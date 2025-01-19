@@ -34,7 +34,8 @@ class GameDBManager(DbManager):
         )
         return _id
 
-    def update_game_info(self, game_id: str, game_info: OptionalGameInfo):
+    def update_game_info(self, game_id: str, game_info: GameInfo | OptionalGameInfo):
+        self._game_exists(game_id)
         data = game_info.model_dump(exclude_unset=True)
         self.update("gameInfo", f"id = '{game_id}'", **data)
 
