@@ -1,3 +1,4 @@
+from operator import is_
 from typing import Literal
 from pydantic import Field, BaseModel
 
@@ -19,7 +20,9 @@ class OptionalUserInfo(BaseModel):
 class GameInfo(BaseModel):
     rate: int = Field(ge=0)
     pot: int = Field(ge=0)
+    is_playing: bool = False
 
 class OptionalGameInfo(BaseModel):
     rate: int | None = Field(default=None, ge=0)
     pot: int | None = Field(default=None, ge=0)
+    is_playing: bool | None = Field(default=None)

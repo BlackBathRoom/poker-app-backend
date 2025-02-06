@@ -38,7 +38,7 @@ class UserDBManager(DbManager):
                 val = int(val) if is_encode else bool(val)
             data.setdefault(key, val)
         return data
-    
+
     def _user_exists(self, user_id: str) -> None:
         if not super().data_checker("users", f"id = '{user_id}'"):
             raise UserNotFoundError
