@@ -6,12 +6,14 @@ from pydantic import Field, BaseModel
 Role = Literal["DB", "SB", "BB"] 
 
 class UserInfo(BaseModel):
+    id: str
     name: str
     chip: int = Field(ge=0)
     role: Role | None
     isplaying: bool
 
 class OptionalUserInfo(BaseModel):
+    id: str | None = Field(default=None)
     name: str | None = Field(default=None)
     chip: int | None = Field(default=None, ge=0)
     role: Role | None = Field(default=None)
