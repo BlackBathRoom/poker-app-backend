@@ -44,7 +44,7 @@ class UserDBManager(DbManager):
             raise UserNotFoundError
 
     def user_list(self) -> list[UserInfo]:
-        data = self.select("users", ["name", "chip", "role", "isplaying"])
+        data = self.select("users", ["id", "name", "chip", "role", "isplaying"])
         users = [
             self._data_formatter(mode="decode", **row)
             for row in data
@@ -52,7 +52,7 @@ class UserDBManager(DbManager):
         return [UserInfo(**user) for user in users]
     
     def user_by_id(self, user_id: str) -> UserInfo:
-        data = self.select("users", ["name", "chip", "role", "isplaying"], f"id = '{user_id}'")
+        data = self.select("users", ["id", "name", "chip", "role", "isplaying"], f"id = '{user_id}'")
         if not data:
             raise UserNotFoundError
         user = self._data_formatter(mode="decode", **data[0])
