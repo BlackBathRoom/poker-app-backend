@@ -12,6 +12,7 @@ Flask-restfulを使用し構築しています
 
 |   propaty   |       type       |
 |:-----------:|:----------------:|
+|     `id`    |     `string`     |
 |    `name`   |     `string`     |
 |    `chip`   |     `number`     |
 |    `role`   | `Role` or `null` |
@@ -27,6 +28,7 @@ Flask-restfulを使用し構築しています
 |:-----------:|:----------------:|
 |    `pot`    |     `number`     |
 |    `rate`   |     `number`     |
+| `isplaying` |      `bool`      |
 
 ## エンドポイント
 
