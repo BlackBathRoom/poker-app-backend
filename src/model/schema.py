@@ -6,7 +6,7 @@ from pydantic import Field, BaseModel
 Role = Literal["DB", "SB", "BB"] 
 
 class UserInfo(BaseModel):
-    id: str
+    id: str | None = Field(default=None)
     name: str
     chip: int = Field(ge=0)
     role: Role | None
