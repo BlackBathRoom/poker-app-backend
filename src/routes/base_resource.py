@@ -5,15 +5,13 @@ from flask import Response, request
 from flask.json import loads
 from flask_restful import abort, output_json, Resource
 
-from response_header import response_header
-
 
 class BaseResource(Resource):
     def __init__(self) -> None:
         super().__init__()
 
     def error_response(self, code: int, message: str) -> NoReturn: # type: ignore
-        abort(code, status=code, message=message, headers=response_header)
+        abort(code, status=code, message=message)
     
     def success_response(
         self,
@@ -21,8 +19,8 @@ class BaseResource(Resource):
         data: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any]]] = None
     ) -> Response:
         if data is None:
-            return Response(status=code, headers=response_header)
-        return output_json(data=data, code=code, headers=response_header)
+            return Response(status=code)
+        return output_json(data=data, code=code)
     
     def request_data_checker(self, data: Any) -> TypeGuard[Mapping[str, Any]]:
         if isinstance(data, Mapping):
