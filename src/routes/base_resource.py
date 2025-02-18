@@ -25,7 +25,7 @@ class BaseResource(Resource):
             return Response(status=code)
         return output_json(data=data, code=code)
     
-    def request_data_checker(self, data: Any) -> TypeGuard[Mapping[str, Any]]:
+    def _request_data_checker(self, data: Any) -> TypeGuard[Mapping[str, Any]]:
         if isinstance(data, Mapping):
             return True
         return False
@@ -35,7 +35,7 @@ class BaseResource(Resource):
             data = request.data.decode("utf-8")
         except JSONDecodeError:
             self.error_response(400, "Invalid request data")
-        if self.request_data_checker(data):
+        if self._request_data_checker(data):
             return data
         else:
             self.error_response(400, "Invalid request data")
