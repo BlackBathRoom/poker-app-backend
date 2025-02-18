@@ -39,11 +39,7 @@ class UserResource(BaseResource):
             data=self.request_loader(),
             into=UserInfo
         )
-        try:
-            _id = self.db.add_user(data)
-        except UserNotFoundError:
-            self.error_response(400, "User not found")
-        
+        _id = self.db.add_user(data)
         return self.success_response(201, data={"id": _id})
     
     def put(self, user_id: str) -> Response:
