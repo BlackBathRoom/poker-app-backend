@@ -15,8 +15,6 @@ api = Api(app)
 
 # Userリソース
 
-T = TypeVar("T", bound=Union[UserInfo, OptionalUserInfo])
-
 class UserResource(BaseResource):
     def __init__(self) -> None:
         super().__init__()
@@ -37,7 +35,7 @@ class UserResource(BaseResource):
         )
 
     def post(self) -> Response:
-        data = self._request_formatter(
+        data = self.request_formatter(
             data=self.request_loader(),
             into=UserInfo
         )
@@ -49,7 +47,7 @@ class UserResource(BaseResource):
         return self.success_response(201, data={"id": _id})
     
     def put(self, user_id: str) -> Response:
-        data = self._request_formatter(
+        data = self.request_formatter(
             data=self.request_loader(),
             into=OptionalUserInfo
         )
@@ -66,20 +64,6 @@ class UserResource(BaseResource):
             self.error_response(404, "User not found")
         return self.success_response(204)
     
-    def _request_formatter(self, data: Any, into: type[T]) -> T:
-        if not self.request_data_checker(data):
-            self.error_response(400, "Invalid request data")
-
-        try:
-            if into == UserInfo:
-                user = UserInfo(**data)
-            else:
-                user = OptionalUserInfo(**data)
-        except ValidationError as e:
-            self.error_response(400, f"Invalid request data: {e}")
-
-        return cast(T, user)
-
 
 # サブリソース
 
@@ -96,16 +80,6 @@ class UserSubResource(BaseResource):
             return False
         return True
     
-    def _data_loader(self) -> OptionalUserInfo:
-        data = self.request_loader()
-        if not self.request_data_checker(data):
-            self.error_response(400, "Invalid request data")
-        try:
-            user = OptionalUserInfo(**data)
-        except ValidationError as e:
-            self.error_response(400, f"Invalid request data: {e}")
-        return user
-    
     def get(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_checker(resource_type):
             self.error_response(404, "Invalid resource type")
@@ -121,8 +95,10 @@ class UserSubResource(BaseResource):
     def put(self, user_id: str, resource_type: str) -> Response:
         if not self._resource_checker(resource_type):
             self.error_response(404, "Invalid resource type")
-
-        user = self._data_loader()
+        user = self.request_formatter(
+            data=self.request_loader(),
+            into=OptionalUserInfo
+        )
         try:
             self.db.update_user(user_id, user)
         except KeyError:
