@@ -19,21 +19,6 @@ class GameInfoResource(BaseResource):
         super().__init__()
         self.db = GameDBManager()
 
-    def _request_formatter(
-        self, data: Mapping[str, Any]
-    ) -> GameInfo:
-        try:
-            game =  GameInfo(**data)
-        except ValidationError as e:
-            self.error_response(400, f"Invalid request data: {e}")
-        return game
-    
-    def _data_loader(self) -> Mapping[str, Any]:
-        request = self.request_loader()
-        if not self.request_data_checker(request):
-            self.error_response(400, "Invalid request data")
-        return request
-
     def get(self, game_id: str) -> Response:
         try:
             game = self.db.get_game_info(game_id)
@@ -42,12 +27,18 @@ class GameInfoResource(BaseResource):
         return self.success_response(200, data=game.model_dump())
     
     def post(self) -> Response:
-        data = self._request_formatter(data=self._data_loader())
+        data = self.request_formatter(
+            data=self.request_loader(),
+            into=GameInfo
+        )
         _id = self.db.insert_game_info(data)
         return self.success_response(201, data={"id": _id})
     
     def put(self, game_id: str) -> Response:
-        data = self._request_formatter(data=self.request_loader())
+        data = self.request_formatter(
+            data=self.request_loader(),
+            into=OptionalGameInfo
+        )
         self.db.update_game_info(game_id, data)
         return self.success_response(204)
     
@@ -65,13 +56,6 @@ class GameInfoSubResource(BaseResource):
         super().__init__()
         self.db = GameDBManager()
 
-    def _request_formatter(self, data: Mapping[str, Any]) -> OptionalGameInfo:
-        try:
-            game =  OptionalGameInfo(**data)
-        except ValidationError as e:
-            self.error_response(400, f"Invalid request data: {e}")
-        return game
-    
     def get(self, game_id: str, resource_type: str) -> Response:
         if resource_type not in self.sub_resource:
             self.error_response(400, "Invalid resource type")
@@ -86,12 +70,10 @@ class GameInfoSubResource(BaseResource):
     def put(self, game_id: str, resource_type: str) -> Response:
         if resource_type not in self.sub_resource:
             self.error_response(400, "Invalid resource type")
-
-        request = self.request_loader()
-        if not self.request_data_checker(request):
-            self.error_response(400, "Invalid request data")
-
-        data = self._request_formatter(request)
+        data = self.request_formatter(
+            data=self.request_loader(),
+            into=OptionalGameInfo
+        )
         self.db.update_game_info(game_id, data)
         return self.success_response(204)
 
