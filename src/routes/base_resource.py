@@ -1,10 +1,13 @@
 from json import JSONDecodeError
-from typing import Any, Mapping, NoReturn, Optional, Sequence, TypeGuard
+from typing import Any, Mapping, NoReturn, Optional, Sequence, TypeGuard, TypeVar
 
 from flask import Response, request
 from flask.json import loads
 from flask_restful import abort, output_json, Resource
+from pydantic import BaseModel
 
+
+T = TypeVar("T")
 
 class BaseResource(Resource):
     def __init__(self) -> None:
@@ -27,10 +30,18 @@ class BaseResource(Resource):
             return True
         return False
     
-    def request_loader(self) -> Any:
+    def request_loader(self) -> Mapping[str, Any]:
         try:
             data = request.data.decode("utf-8")
         except JSONDecodeError:
             self.error_response(400, "Invalid request data")
-        return loads(data)
+        if self.request_data_checker(data):
+            return data
+        else:
+            self.error_response(400, "Invalid request data")
 
+    def request_formatter(self, data: Mapping[str, Any], into: type[T]) -> T:
+        try:
+            return into(**data)
+        except Exception as e:
+            self.error_response(400, f"Invalid request data: {e}")
