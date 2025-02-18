@@ -19,7 +19,6 @@ CORS(
             "allow_headers": ["Content-Type"],
         }
     },
-
 )
 
 app.register_blueprint(user.app, url_prefix="/users")

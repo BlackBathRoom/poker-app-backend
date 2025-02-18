@@ -20,7 +20,8 @@ class GameInfoResource(BaseResource):
         self.db = GameDBManager()
 
     def _request_formatter(
-        self, data: Mapping[str, Any]) -> GameInfo:
+        self, data: Mapping[str, Any]
+    ) -> GameInfo:
         try:
             game =  GameInfo(**data)
         except ValidationError as e:

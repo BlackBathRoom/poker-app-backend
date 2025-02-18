@@ -19,7 +19,7 @@ class GameDBManager(DbManager):
             id="TEXT PRIMARY KEY",
             rate="INTEGER NOT NULL DEFAULT 0",
             pot="INTEGER NOT NULL DEFAULT 0",
-            is_playing="INTEGER NOT NULL DEFAULT 0"
+            isplaying="INTEGER NOT NULL DEFAULT 0"
         )
 
     def _game_exists(self, game_id: str) -> None:
