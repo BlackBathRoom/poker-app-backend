@@ -4,7 +4,6 @@ from typing import Any, Mapping, NoReturn, Optional, Sequence, TypeGuard, TypeVa
 from flask import Response, request
 from flask.json import loads
 from flask_restful import abort, output_json, Resource
-from pydantic import BaseModel
 
 
 T = TypeVar("T")
@@ -32,13 +31,13 @@ class BaseResource(Resource):
     
     def request_loader(self) -> Mapping[str, Any]:
         try:
-            data = request.data.decode("utf-8")
+            data = loads(request.data.decode("utf-8"))
         except JSONDecodeError:
-            self.error_response(400, "Invalid request data")
+            self.error_response(400, "Invalid request data: JSON decode error")
         if self._request_data_checker(data):
             return data
         else:
-            self.error_response(400, "Invalid request data")
+            self.error_response(400, "Invalid request data: Not a Mapping object")
 
     def request_formatter(self, data: Mapping[str, Any], into: type[T]) -> T:
         try:
