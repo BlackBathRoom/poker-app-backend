@@ -4,7 +4,6 @@ from flask_cors import CORS
 from routes import user, game_info
 
 
-
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
 CORS(

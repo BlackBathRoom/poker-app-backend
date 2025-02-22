@@ -57,7 +57,7 @@ class GameDBManager(DbManager):
 
     def get_game_info(self, game_id: str) -> GameInfo:
         self._game_exists(game_id)
-        data = self.select("gameInfo", ["rate", "pot"], f"id = '{game_id}'")
+        data = self.select("gameInfo", ["rate", "pot", "isplaying"], f"id = '{game_id}'")
         return GameInfo(**self._data_formatter(mode="decode", **data[0]))
     
     def delete_game_info(self, game_id: str) -> None:
