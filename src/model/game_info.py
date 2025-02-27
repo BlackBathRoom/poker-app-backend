@@ -43,7 +43,7 @@ class GameDBManager(DbManager):
         _id = str(uuid4())
         self.insert(
             "gameInfo",
-            id=str(uuid4()),
+            id=str(_id),
             **self._data_formatter(mode="encode", **game_info.model_dump())
         )
         return _id
